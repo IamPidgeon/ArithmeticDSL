@@ -42,13 +42,13 @@
         [(equal? (car (car env)) str) (cdr (car env))]
         [#t (envlookup (cdr env) str)]))
 
+;; This is an interpreter for the MUPL language
 ;; Do NOT change the two cases given to you.  
 ;; DO add more cases for other kinds of MUPL expressions.
 ;; We will test eval-under-env by calling it directly even though
 ;; "in real life" it would be a helper function of eval-exp.
 ;; This function evaluates MUPL expressions as closures. 
 ;; Takes an expression e and an environment env
-; option for append without list?
 (define (eval-under-env e env)
   (cond [(int? e) e] ;; The first four conditions are like base cases/units of MUPL.
         [(aunit? e) e]
