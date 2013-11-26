@@ -16,12 +16,12 @@
 (struct fst  (e)    #:transparent) ;; get first part of a pair
 (struct snd  (e)    #:transparent) ;; get second part of a pair
 (struct aunit ()    #:transparent) ;; unit value -- good for ending a list
-(struct isaunit (e) #:transparent) ;; evaluate to 1 if e is unit else 0
+(struct isaunit (e) #:transparent) ;; evaluate to 1 if e is aunit else 0
 
 ;; a closure is not in "source" programs; it is what functions evaluate to
 (struct closure (env fun) #:transparent) 
 
-;; Problem 1.a
+;; Problem 1.a: Convert Racket list to MUPL list
 (define (racketlist->mupllist rs)
   (if (null? rs) 
       (aunit)
@@ -33,7 +33,7 @@
        null
       (cons (apair-e1 ms) (mupllist->racketlist (apair-e2 ms)))))
 
-;; lookup a variable in an environment
+;; Looks up a variable str in an "environment" env
 ;; Do NOT change this function
 (define (envlookup env str)
   (cond [(null? env) (error "unbound variable during evaluation" str)]
@@ -44,14 +44,15 @@
 ;; DO add more cases for other kinds of MUPL expressions.
 ;; We will test eval-under-env by calling it directly even though
 ;; "in real life" it would be a helper function of eval-exp.
-; clean this up
+;; This function evaluates MUPL expressions as closures. 
+;; Takes an expression e and an environment env
 ; option for append without list?
 (define (eval-under-env e env)
-  (cond [(int? e) e]
+  (cond [(int? e) e] ;; The first four conditions are like base cases/units of MUPL.
         [(aunit? e) e]
         [(closure? e) e]
-        [(var? e) (eval-under-env (envlookup env (var-string e)) env)]
         [(fun? e) (closure env e)]
+        [(var? e) (eval-under-env (envlookup env (var-string e)) env)]
         [(add? e) 
          (let ([v1 (eval-under-env (add-e1 e) env)]
                [v2 (eval-under-env (add-e2 e) env)])
@@ -73,22 +74,19 @@
            (if (apair? v) 
                (apair-e1 v)
                (error "MUPL fst applied to non-pair")))]
-                      
         [(snd? e)
          (let ([v (eval-under-env (snd-e e) env)])
            (if (apair? v) 
                (apair-e2 v)
                (error "MUPL snd applied to non-pair")))]
         [(isaunit? e) 
-         (if (aunit? (eval-under-env (isaunit-e e) env))
-             (int 1)
-             (int 0))]
+         (if (aunit? (eval-under-env (isaunit-e e) env)) (int 1) (int 0))]
         [(mlet? e) 
-         (eval-under-env (mlet-body e) 
+         (eval-under-env (mlet-body e) ;; Like let, evaluates the body in updated env
                          (append (list (cons (mlet-var e) 
                                              (eval-under-env (mlet-e e) env))) 
                                  env))]
-        [(call? e)
+        [(call? e) ;; Calls and evaluates a closure
          (let ([clos (eval-under-env (call-funexp e) env)])
            (if (not (closure? clos)) 
                (error "MUPL call applied to non-closure")
@@ -98,29 +96,30 @@
                       [fun-name (fun-nameopt func)]
                       [arg (fun-formal func)]
                       [f-body (fun-body func)])
-                   (if (equal? #f fun-name)
-                       (eval-under-env f-body (append (list (cons arg arg-val)) envc))
-                       (eval-under-env f-body (append (list (cons fun-name clos)
-                                                            (cons arg arg-val)) envc))))))]
+                 (eval-under-env f-body 
+                 ;; Updates function's env with arg and fun-name if not anonymous fun
+                                 (append (list (cons arg arg-val))
+                                         (if (equal? #f fun-name) ;; anonymous?
+                                              null
+                                             (list (cons fun-name clos)))
+                                         envc)))))]
         [#t (error (format "bad MUPL expression: ~v" e))]))
 
+;; This function evaluates MUPL expressions as closures. 
 ;; Do NOT change
 (define (eval-exp e)
   (eval-under-env e null))
 
-
-;; Problem 3
-
+;; 3.a ifaunit macro: if e1 is aunit then e2 else e3
 (define (ifaunit e1 e2 e3) (ifgreater (isaunit e1) (int 0) e2 e3))
 
+;; 3.b mlet* like let* for MUPL expressions
 (define (mlet* lstlst e2)
-   (letrec 
-       ([lst-rec 
-         (lambda (lst2) (if (null? lst2) 
-                         e2
-                        (mlet (car (car lst2)) (cdr (car lst2)) (lst-rec (cdr lst2)))))])
-     (lst-rec lstlst))) 
+  (if (null? lstlst)
+       e2
+      (mlet (car (car lstlst)) (cdr (car lstlst)) (mlet* (cdr lstlst) e2))))
 
+;; 3.c if e1 == e2 then e3 else e4
 (define (ifeq e1 e2 e3 e4) 
   (mlet* (list (cons "_x" e1) (cons "_y" e2)) 
          (ifgreater (var "_x") (var "_y") 
