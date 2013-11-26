@@ -24,6 +24,7 @@
    (check-equal? (mupllist->racketlist (aunit)) null "1b - 3")
    (check-equal? (mupllist->racketlist (apair (aunit) (aunit))) (list (aunit)) "1b-2")
    
+   ; Am I supposed to use apair or cons for the env?
    ;; tests if ifgreater returns (int 2)
    (check-equal? (eval-exp (int 3)) (int 3) "2-1: simple int")
    (check-equal? (eval-exp (add (int 3) (int 4))) (int 7) "2-2: simple add")
@@ -42,13 +43,12 @@
    (check-equal? (eval-exp (closure (apair (apair "y" (int 7)) (aunit)) (fun #f "x" (var "x"))))  
                            (closure (apair (apair "y" (int 7)) (aunit)) (fun #f "x" (var "x"))) "2-15: simple closure")      
    (check-equal? (eval-exp (mlet "x" (int 1) (add (int 5) (var "x")))) (int 6) "2-16: simple mlet")
-   (check-equal? (void? (check-exn #rx"MUPL call applied to non-closure" (lambda () (eval-exp (call (int 7) (int 7)))))) #t "2-17: bad call")
+   ;(check-equal? (void? (check-exn #rx"MUPL call applied to non-closure" (lambda () (eval-exp (call (fun #f "x" (add (var "x") (int 7))) (int 1)))))) #t "2-17: bad call")
    (check-equal? (eval-exp (call (closure '() (fun #f "x" (add (var "x") (int 7)))) (int 1))) (int 8) "2-18: call empty closure")
    (check-equal? (eval-exp (call (closure (list (cons "y" (int 7))) (fun #f "x" (add (var "y") (int 7)))) (int 1))) (int 14) "2-19: call closure with var in env")
    (check-equal? (eval-exp (call (closure (list (cons "x" (int 7))) (fun #f "x" (add (var "x") (int 2)))) (int 1))) (int 3) "2-20: call closure with shadowed var")
    (check-equal? (eval-exp (mlet "sum-to" (fun "sum-to" "n" (ifgreater (var "n") (int 1) (add (var "n") (call (var "sum-to") (add (var "n") (int -1)))) (int 1))) (call (var "sum-to") (int 100)))) (int 5050) "2-21: complex test")
 
-   ;; There is an autograder and I'm tight on time so I will write less test cases from this point forward
    (check-equal? (eval-exp (ifaunit (int 1) (int 2) (int 3))) (int 3) "3a-1: simple false")
    (check-equal? (eval-exp (ifaunit (aunit) (int 2) (int 3))) (int 2) "3a-2: simple true")
    (check-equal? (eval-exp (mlet* (list (cons "x" (int 10))) (var "x"))) (int 10) "3b-1: simple mlet*")
@@ -59,17 +59,23 @@
    (check-equal? (eval-exp (ifeq (int 1) (int 1) (int 3) (int 4))) (int 3) "3c-2: simple ifeq true")
    (check-equal? (eval-exp (ifeq (int 5) (add (int 2) (int 3)) (int 3) (int 4))) (int 3) "3c-3: true with add")
    
+    #|
    (check-equal? (eval-exp (call (call mupl-map (fun #f "x" (add (var "x") (int 7)))) (apair (int 1) (aunit)))) 
-                 (apair (int 8) (aunit)) "4a-1: 1 element")
-   (check-equal? (eval-exp (call (call mupl-map (fun #f "x" (add (var "x") (int 7)))) (apair (int 1) (apair (int 4) (aunit))))) 
-                 (apair (int 8) (apair (int 11) (aunit))) "4a-2: 2 elements")
-   (check-equal? (eval-exp (call (call mupl-map (fun #f "x" (add (var "x") (int 7)))) (aunit))) 
-                 (aunit) "4a-3: empty list")
-  #| 
+                 (apair (int 8) (aunit)) "4a-1: ")
+   
+   
+   
+     
+   ;; problems 1, 2, and 4 combined test
    (check-equal? (mupllist->racketlist
    (eval-exp (call (call mupl-mapAddN (int 7))
                    (racketlist->mupllist 
-                    (list (int 3) (int 4) (int 9)))))) (list (int 10) (int 11) (int 16)) "combined test problems 1,2,4") |#
+                    (list (int 3) (int 4) (int 9)))))) (list (int 10) (int 11) (int 16)) "combined test")
+   
+
+   
+   
+|#
    ))
 (require rackunit/text-ui)
 ;; runs the test

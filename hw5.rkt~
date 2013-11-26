@@ -9,10 +9,8 @@
 (struct int  (num)    #:transparent)  ;; a constant number, e.g., (int 17)
 (struct add  (e1 e2)  #:transparent)  ;; add two expressions
 (struct ifgreater (e1 e2 e3 e4)    #:transparent) ;; if e1 > e2 then e3 else e4
-;; a recursive(?) 1-argument function. fun-name arg-name fun-body
-(struct fun  (nameopt formal body) #:transparent)
-;; function call. Arguments are fun (fun's arg-value)
-(struct call (funexp actual)       #:transparent) 
+(struct fun  (nameopt formal body) #:transparent) ;; a recursive(?) 1-argument function
+(struct call (funexp actual)       #:transparent) ;; function call
 (struct mlet (var e body) #:transparent) ;; a local binding (let var = e in body) 
 (struct apair (e1 e2)     #:transparent) ;; make a new pair
 (struct fst  (e)    #:transparent) ;; get first part of a pair
@@ -130,23 +128,16 @@
 
 
 
-;; 4.a map for MUPL
-(define mupl-map ;; Curried, returns function that takes a list
-  (fun "mupl-cur" "fun-arg"
-       (fun "mupl-rec" "lst"
-            (ifaunit (var "lst")
-                     (aunit)
-                     (apair (call (var "fun-arg") (fst (var "lst"))) 
-                            (call (var "mupl-rec") (snd (var "lst"))))))))
-                               
-  
+;; Problem 4
 
-; returns a MUPL fun that takes a MUPL list and maps it to a new list
+(define mupl-map 
+  0)
+; takes a MUPL fun and returns a MUPL fun that takes a MUPL list and maps it to a new list
 #|  (fun #f "func"   ; can I lose the name and just recursivelly call mupl-map?
        (fun "map-acc" "lst"
                   (ifaunit (var "lst") 
                   (aunit)
-                  (apair (var "func") (fst (var "lst"))) 
+                  (apair (apair (var "func") (fst (var "lst"))) 
                          (apair (var "map-acc") (snd (var "lst"))))))))|#
 ;(struct closure (env fun) #:transparent
 ;(struct fun  (nameopt formal body)
