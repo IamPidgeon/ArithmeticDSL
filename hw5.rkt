@@ -54,7 +54,7 @@
         [(aunit? e) e]
         [(closure? e) e]
         [(fun? e) (closure env e)]
-        [(var? e) (eval-under-env (envlookup env (var-string e)) env)]
+        [(var? e) (envlookup env (var-string e))]
         [(add? e) 
          (let ([v1 (eval-under-env (add-e1 e) env)]
                [v2 (eval-under-env (add-e2 e) env)])
@@ -85,26 +85,22 @@
          (if (aunit? (eval-under-env (isaunit-e e) env)) (int 1) (int 0))]
         [(mlet? e) 
          (eval-under-env (mlet-body e) ;; Like let, evaluates the body in updated env
-                         (append (list (cons (mlet-var e) 
-                                             (eval-under-env (mlet-e e) env))) 
-                                 env))]
+                         (cons (cons (mlet-var e) (eval-under-env (mlet-e e) env)) env))]
         [(call? e) ;; Calls and evaluates a closure
          (let ([clos (eval-under-env (call-funexp e) env)])
            (if (not (closure? clos)) 
                (error "MUPL call applied to non-closure")
                (let* ([arg-val (eval-under-env (call-actual e) env)]
-                      [envc (closure-env clos)]
                       [func (closure-fun clos)]
                       [fun-name (fun-nameopt func)]
-                      [arg (fun-formal func)]
-                      [f-body (fun-body func)])
-                 (eval-under-env f-body 
+                      [arg (fun-formal func)])
+                 (eval-under-env (fun-body func)
                  ;; Updates function's env with arg and fun-name if not anonymous fun
                                  (append (list (cons arg arg-val))
-                                         (if (equal? #f fun-name) ;; anonymous?
-                                              null
-                                             (list (cons fun-name clos)))
-                                         envc)))))]
+                                         (if fun-name ;; anonymous?
+                                            (list (cons fun-name clos))
+                                             null)
+                                         (closure-env clos))))))]
         [#t (error (format "bad MUPL expression: ~v" e))]))
 
 ;; This function evaluates MUPL expressions as closures. 
@@ -123,14 +119,15 @@
 
 ;; 3.c if e1 == e2 then e3 else e4
 (define (ifeq e1 e2 e3 e4) 
-  (mlet* (list (cons "_x" e1) (cons "_y" e2)) 
-         (ifgreater (var "_x") (var "_y") 
-                    e4
-                    (ifgreater (var "_y") (var "_x") e4 e3))))
+  (mlet "_x" e1 
+        (mlet "_y" e2 
+              (ifgreater (var "_x") (var "_y") 
+                         e4
+                         (ifgreater (var "_y") (var "_x") e4 e3)))))
 
 ;; 4.a map for MUPL
 (define mupl-map ;; Curried, returns function that takes a list
-  (fun "mupl-cur" "fun-arg"
+  (fun #f "fun-arg"
        (fun "mupl-rec" "lst"
             (ifaunit (var "lst")
                      (aunit)
@@ -140,5 +137,5 @@
 ;; 4.b adds i to each element of list given to curried fun returned from map
 (define mupl-mapAddN 
   (mlet "map" mupl-map
-       (fun "Add-help" "i"
+       (fun #f "i"
             (call (var "map") (fun #f "x" (add (var "x") (var "i")))))))
