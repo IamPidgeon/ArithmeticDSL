@@ -3,7 +3,7 @@
 #lang racket
 (provide (all-defined-out)) ;; so we can put tests in a second file
 
-
+;; We were not allowed to change the architecture of the structs and eval functions below.
 ;; definition of structures for MUPL programs - Do NOT change
 (struct var  (string) #:transparent)  ;; a variable, e.g., (var "foo")
 (struct int  (num)    #:transparent)  ;; a constant number, e.g., (int 17)
@@ -128,8 +128,6 @@
                     e4
                     (ifgreater (var "_y") (var "_x") e4 e3))))
 
-
-
 ;; 4.a map for MUPL
 (define mupl-map ;; Curried, returns function that takes a list
   (fun "mupl-cur" "fun-arg"
@@ -138,23 +136,12 @@
                      (aunit)
                      (apair (call (var "fun-arg") (fst (var "lst"))) 
                             (call (var "mupl-rec") (snd (var "lst"))))))))
-                               
-  
 
-; returns a MUPL fun that takes a MUPL list and maps it to a new list
-#|  (fun #f "func"   ; can I lose the name and just recursivelly call mupl-map?
-       (fun "map-acc" "lst"
-                  (ifaunit (var "lst") 
-                  (aunit)
-                  (apair (var "func") (fst (var "lst"))) 
-                         (apair (var "map-acc") (snd (var "lst"))))))))|#
-;(struct closure (env fun) #:transparent
-;(struct fun  (nameopt formal body)
-
-
+;; 4.b adds i to each element of list given to curried fun returned from map
 (define mupl-mapAddN 
   (mlet "map" mupl-map
-        "CHANGE (notice map is now in MUPL scope)"))
+       (fun "Add-help" "i"
+            (call (var "map") (fun #f "x" (add (var "x") (var "i")))))))
 
 ;; Challenge Problem
 

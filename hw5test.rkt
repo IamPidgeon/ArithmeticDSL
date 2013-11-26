@@ -65,11 +65,11 @@
                  (apair (int 8) (apair (int 11) (aunit))) "4a-2: 2 elements")
    (check-equal? (eval-exp (call (call mupl-map (fun #f "x" (add (var "x") (int 7)))) (aunit))) 
                  (aunit) "4a-3: empty list")
-  #| 
+   
    (check-equal? (mupllist->racketlist
    (eval-exp (call (call mupl-mapAddN (int 7))
                    (racketlist->mupllist 
-                    (list (int 3) (int 4) (int 9)))))) (list (int 10) (int 11) (int 16)) "combined test problems 1,2,4") |#
+                    (list (int 3) (int 4) (int 9)))))) (list (int 10) (int 11) (int 16)) "combined test problems 1,2,4")
    ))
 (require rackunit/text-ui)
 ;; runs the test
